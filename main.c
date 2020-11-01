@@ -15,6 +15,10 @@
 #include "esp_vfs.h"
 #include "esp_vfs_fat.h"
 
+#include "driver/gpio.h"
+#include "sdkconfig.h"
+
+#define BLINK_GPIO 2    //CONFIG_BLINK_GPIO <<< XXX: CZXEMU NIE DZIALA?
 
 // set AP CONFIG values
 #ifdef CONFIG_AP_HIDE_SSID
@@ -139,8 +143,16 @@ static void http_server_netconn_serve(struct netconn *conn) {
 			if(strstr(request_line, "GET / ")) {
 				netconn_write(conn, http_html_hdr, sizeof(http_html_hdr) - 1, NETCONN_NOCOPY);
                 netconn_write(conn, htmlExample, sizeof(htmlExample) - 1, NETCONN_NOCOPY);					
-                printf("ASKED FOR INDEX.HTML \n\n");    ///<<< TODO: Dodac strone
-			}
+                printf("ASKED FOR INDEX.HTML \n\n");
+			} else if (strstr(request_line, "GET /ON")) {
+                netconn_write(conn, http_html_hdr, sizeof(http_html_hdr) - 1, NETCONN_NOCOPY);
+                 gpio_set_level(BLINK_GPIO, 1);
+                printf("TURN ON \n\n");
+            } else if (strstr(request_line, "GET /OFF")) {
+                netconn_write(conn, http_html_hdr, sizeof(http_html_hdr) - 1, NETCONN_NOCOPY);
+                 gpio_set_level(BLINK_GPIO, 0);
+                printf("TURN OFF \n\n");
+            }
 		}
 	}
 }
@@ -148,7 +160,12 @@ static void http_server_netconn_serve(struct netconn *conn) {
 // Main application
 void app_main()
 {	
-	// disable the default wifi logging
+    gpio_pad_select_gpio(BLINK_GPIO);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
+    gpio_set_level(BLINK_GPIO, 0);
+	
+    // disable the default wifi logging
 	esp_log_level_set("wifi", ESP_LOG_NONE);
 	
 	printf("ESP32 SoftAP HTTP Server\n\n");
