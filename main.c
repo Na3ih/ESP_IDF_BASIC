@@ -157,6 +157,21 @@ static void http_server_netconn_serve(struct netconn *conn) {
 	}
 }
 
+void start_mdns_service()
+{
+    //initialize mDNS service
+    esp_err_t err = mdns_init();
+    if (err) {
+        printf("MDNS Init failed: %d\n", err);
+        return;
+    }
+
+    //set hostname
+    mdns_hostname_set("my-esp32");
+    //set default instance
+    mdns_instance_name_set("Jhon's ESP32 Thing");
+}
+
 // Main application
 void app_main()
 {	
@@ -224,11 +239,12 @@ void app_main()
     };
 	ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_config));
 	printf("- Wifi network settings applied\n");
-	
     
 	// start the wifi interface
 	ESP_ERROR_CHECK(esp_wifi_start());
 	printf("- Wifi adapter starting...\n");
+	
+	start_mdns_service();
 	
 	// start the tasks
     xTaskCreate(&ap_monitor_task, "ap_monitor_task", 2048, NULL, 5, NULL);
